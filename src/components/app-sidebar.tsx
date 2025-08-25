@@ -4,6 +4,7 @@ import * as React from "react"
 import { ArchiveX, Command, File, Inbox, Send, Trash2 } from "lucide-react"
 import { api } from "~/trpc/react"
 import { Skeleton } from "~/components/ui/skeleton"
+import { Loader2 } from "lucide-react"
 import { EmptyState } from "~/components/ui/empty-state"
 import {
   DropdownMenu,
@@ -45,7 +46,6 @@ const SkeletonLoader = React.memo(() => (
 ))
 SkeletonLoader.displayName = "SkeletonLoader"
 
-// Memoized application item component
 const ApplicationItem = React.memo(({ app }: { app: any }) => {
   const handleImageError = React.useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     (e.target as HTMLImageElement).src = "/favicon.ico";
@@ -104,7 +104,7 @@ const ApplicationsList = React.memo(({
 })
 ApplicationsList.displayName = "ApplicationsList"
 
-// Memoized filter dropdown component
+
 const FilterDropdown = React.memo(({ 
   filter, 
   onFilterChange 
@@ -140,7 +140,6 @@ const FilterDropdown = React.memo(({
 ))
 FilterDropdown.displayName = "FilterDropdown"
 
-// Memoized navigation menu component
 const NavigationMenu = React.memo(({ 
   navMain, 
   activeItem, 
@@ -185,36 +184,46 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
   const [activeItem, setActiveItem] = React.useState(() => navMain[0]);
   const { setOpen } = useSidebar();
 
-  const [search, setSearch] = React.useState("");
-  const [filter, setFilter] = React.useState<"text" | "id">("text");
 
-  // Memoize API query parameters to prevent unnecessary re-renders
-  const searchQueryParams = React.useMemo(() => ({ 
-    query: search, 
-    filter 
-  }), [search, filter]);
+  const [search, setSearch] = React.useState("");
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
+  const [filter, setFilter] = React.useState<"text" | "id">("text");
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  React.useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const searchQueryParams = React.useMemo(() => ({
+    query: debouncedSearch,
+    filter
+  }), [debouncedSearch, filter]);
 
   const {
     data: applications,
     isLoading,
-  } = api.applications.search.useQuery(searchQueryParams, { 
-    enabled: search.length > 0 
+    isFetching,
+  } = api.applications.search.useQuery(searchQueryParams, {
+    enabled: debouncedSearch.length > 0
   });
 
   const {
     data: allApplications,
     isLoading: isLoadingAll,
-  } = api.applications.getAll.useQuery(undefined, { 
-    enabled: search.length === 0 
+  } = api.applications.getAll.useQuery(undefined, {
+    enabled: debouncedSearch.length === 0
   });
 
-  // Memoize the shown applications to prevent recalculation
-  const shownApplications = React.useMemo(() => 
-    search.length > 0 ? applications : allApplications,
-    [search.length, applications, allApplications]
+  const shownApplications = React.useMemo(() =>
+    debouncedSearch.length > 0 ? applications : allApplications,
+    [debouncedSearch.length, applications, allApplications]
   );
 
-  // Memoize event handlers
   const handleItemClick = React.useCallback((item: any) => {
     setActiveItem(item);
     setOpen(true);
@@ -228,7 +237,6 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
     setFilter(newFilter);
   }, []);
 
-  // Memoize user data
   const userData = React.useMemo(() => ({
     name: "shadcn",
     email: "m@example.com",
@@ -286,15 +294,35 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
             </div>
           </div>
           <div className="flex gap-2 items-center">
-            <SidebarInput
-              placeholder={filter === "id" ? "Search by ID..." : "Type to search..."}
-              value={search}
-              onChange={handleSearchChange}
-              className="flex-1"
-            />
-            <FilterDropdown 
-              filter={filter} 
-              onFilterChange={handleFilterChange} 
+            <div className="relative flex-1">
+              <SidebarInput
+                ref={inputRef}
+                placeholder={filter === "id" ? "Search by ID..." : "Type to search..."}
+                value={search}
+                onChange={handleSearchChange}
+                className="pr-8"
+                autoComplete="off"
+              />
+              {isFetching && (
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  <Loader2 className="animate-spin size-4" />
+                </span>
+              )}
+              {search && !isFetching && (
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setSearch("")}
+                  tabIndex={0}
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            <FilterDropdown
+              filter={filter}
+              onFilterChange={handleFilterChange}
             />
           </div>
         </SidebarHeader>

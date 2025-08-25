@@ -7,7 +7,14 @@ import { like, or } from "drizzle-orm";
  * Fetch all applications from the database.
  */
 export async function getAllApplications() {
-	return await db.select().from(applications);
+	return await db
+		.select({
+			id: applications.id,
+			name: applications.name,
+			icon: applications.icon,
+			description: applications.description,
+		})
+		.from(applications);
 }
 
 /**
