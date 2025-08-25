@@ -5,6 +5,13 @@ import { ArchiveX, Command, File, Inbox, Send, Trash2 } from "lucide-react"
 import { api } from "~/trpc/react"
 import { Skeleton } from "~/components/ui/skeleton"
 import { EmptyState } from "~/components/ui/empty-state"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "~/components/ui/dropdown-menu"
+import { Button } from "~/components/ui/button"
 
 import { NavUser } from "~/components/nav-user"
 import { Label } from "~/components/ui/label"
@@ -35,10 +42,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { setOpen } = useSidebar();
 
   const [search, setSearch] = React.useState("");
+  const [filter, setFilter] = React.useState<"text" | "id">("text");
   const {
     data: applications,
     isLoading,
-  } = api.applications.search.useQuery({ query: search }, { enabled: search.length > 0 });
+  } = api.applications.search.useQuery({ query: search, filter }, { enabled: search.length > 0 });
   const {
     data: allApplications,
     isLoading: isLoadingAll,
@@ -115,11 +123,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {activeItem?.title}
             </div>
           </div>
-          <SidebarInput
-            placeholder="Type to search..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <div className="flex gap-2 items-center">
+            <SidebarInput
+              placeholder={filter === "id" ? "Search by ID..." : "Type to search..."}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="flex-1"
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  type="button"
+                >
+                  {filter === "id" ? "ID" : "Text"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => setFilter("text")}
+                  data-state={filter === "text" ? "active" : undefined}
+                >
+                  Text
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => setFilter("id")}
+                  data-state={filter === "id" ? "active" : undefined}
+                >
+                  ID
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup className="px-0">

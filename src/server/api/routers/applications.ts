@@ -9,7 +9,7 @@ export const applicationsRouter = createTRPCRouter({
   getAll: publicProcedure.query(async (): Promise<ApplicationSelect[]> => {
     return await getAllApplications();
   }),
-  search: publicProcedure.input(z.object({ query: z.string() })).query(async ({ input }): Promise<ApplicationSelect[]> => {
-    return await searchApplications(input.query);
+  search: publicProcedure.input(z.object({ query: z.string(), filter: z.enum(["id", "text"]).default("text") })).query(async ({ input }): Promise<ApplicationSelect[]> => {
+    return await searchApplications(input.query, input.filter);
   }),
 });

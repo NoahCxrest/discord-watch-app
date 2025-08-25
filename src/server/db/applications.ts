@@ -11,9 +11,15 @@ export async function getAllApplications() {
 }
 
 /**
- * Search applications by name or description.
+ * Search applications by name, description, or id.
  */
-export async function searchApplications(query: string) {
+export async function searchApplications(query: string, filter: "id" | "text" = "text") {
+	if (filter === "id") {
+		return await db
+			.select()
+			.from(applications)
+			.where(like(applications.id, `%${query}%`));
+	}
 	return await db
 		.select()
 		.from(applications)
