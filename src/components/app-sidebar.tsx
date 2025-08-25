@@ -3,6 +3,8 @@
 import * as React from "react"
 import { ArchiveX, Command, File, Inbox, Send, Trash2 } from "lucide-react"
 import { api } from "~/trpc/react"
+import { Skeleton } from "~/components/ui/skeleton"
+import { EmptyState } from "~/components/ui/empty-state"
 
 import { NavUser } from "~/components/nav-user"
 import { Label } from "~/components/ui/label"
@@ -32,7 +34,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [activeItem, setActiveItem] = React.useState(navMain[0]);
   const { setOpen } = useSidebar();
 
-  const { data: applications, isLoading } = api.applications.getAll.useQuery();
+  const [search, setSearch] = React.useState("");
+  const {
+    data: applications,
+    isLoading,
+  } = api.applications.search.useQuery({ query: search }, { enabled: search.length > 0 });
+  const {
+    data: allApplications,
+    isLoading: isLoadingAll,
+  } = api.applications.getAll.useQuery(undefined, { enabled: search.length === 0 });
+  const shownApplications = search.length > 0 ? applications : allApplications;
 
   return (
     <Sidebar
@@ -104,16 +115,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {activeItem?.title}
             </div>
           </div>
-          <SidebarInput placeholder="Type to search..." />
+          <SidebarInput
+            placeholder="Type to search..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup className="px-0">
             <SidebarGroupContent>
-              {isLoading && <div className="p-4 text-sm">Loading...</div>}
-              {!isLoading && applications && applications.length === 0 && (
-                <div className="p-4 text-sm">No applications found.</div>
+              {(isLoading || isLoadingAll) && (
+                <>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex flex-col items-start gap-2 border-b p-4 last:border-b-0">
+                      <div className="flex w-full items-center gap-2">
+                        <Skeleton className="size-6 rounded-full" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                      <Skeleton className="h-3 w-48" />
+                    </div>
+                  ))}
+                </>
               )}
-              {!isLoading && applications && applications.map((app) => (
+              {!isLoading && !isLoadingAll && shownApplications && shownApplications.length === 0 && (
+                <EmptyState title="No applications found" description="Try a different search or add a new application." />
+              )}
+              {!isLoading && !isLoadingAll && shownApplications && shownApplications.map((app) => (
                 <a
                   href="#"
                   key={app.id}
