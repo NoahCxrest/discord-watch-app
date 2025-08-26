@@ -64,14 +64,6 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
           />
         )}
 
-        {/* Stats grid */}
-        <div className="mt-8 grid grid-cols-2 gap-4 text-sm bg-card rounded-xl p-4 shadow">
-          <div><span className="font-medium">Verified:</span> {app.isVerified ? "Yes" : "No"}</div>
-          {app.botUsername && <div><span className="font-medium">Bot Username:</span> {app.botUsername}</div>}
-          {app.guildCount && <div><span className="font-medium">Guild Count:</span> {app.guildCount}</div>}
-          {app.createdAt && <div><span className="font-medium">Created:</span> {app.createdAt}</div>}
-          {app.updatedAt && <div><span className="font-medium">Updated:</span> {app.updatedAt}</div>}
-        </div>
       </div>
     </div>
   );

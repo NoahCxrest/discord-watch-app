@@ -1,3 +1,5 @@
+
+import "../server/cron";
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
@@ -9,15 +11,6 @@ import {
   SidebarProvider,
   SidebarInset,
 } from "~/components/ui/sidebar";
-import { Separator } from "~/components/ui/separator";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "~/components/ui/breadcrumb";
 import React from "react";
 import { TRPCReactProvider } from "~/trpc/react";
 

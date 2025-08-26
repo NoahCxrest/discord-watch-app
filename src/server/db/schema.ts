@@ -1,4 +1,4 @@
-import { mysqlTable, tinyint, primaryKey, varchar, text, mediumtext, timestamp } from "drizzle-orm/mysql-core"
+import { mysqlTable, tinyint, primaryKey, varchar, text, mediumtext, timestamp, bigint, index } from "drizzle-orm/mysql-core"
 
 export const applications = mysqlTable("applications", {
 	id: varchar({ length: 32 }).notNull(),
@@ -20,4 +20,15 @@ export const applications = mysqlTable("applications", {
 },
 (table) => [
 	primaryKey({ columns: [table.id], name: "applications_id"}),
+]);
+
+export const appStats = mysqlTable("app_stats", {
+  id: bigint("id", { mode: "number", unsigned: true }).autoincrement().notNull(),
+  botId: varchar("bot_id", { length: 32 }).notNull(),
+  guildCount: bigint("guild_count", { mode: "number", unsigned: true }).notNull(),
+  recordedAt: timestamp("recorded_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.id], name: "PRIMARY" }),
+  index("bot_id_idx").on(table.botId),
+  index("recorded_at_idx").on(table.recordedAt),
 ]);
