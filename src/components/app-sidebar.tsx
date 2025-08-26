@@ -7,6 +7,7 @@ import { api } from "~/trpc/react"
 import { useInView } from "react-intersection-observer"
 import { Skeleton } from "~/components/ui/skeleton"
 import { Loader2 } from "lucide-react"
+import ReactMarkdown from "react-markdown"
 import { EmptyState } from "~/components/ui/empty-state"
 import {
   DropdownMenu,
@@ -70,7 +71,7 @@ const ApplicationItem = React.memo(({ app }: { app: any }) => {
       </div>
       {app.description && (
         <span className="line-clamp-2 w-[260px] text-xs whitespace-break-spaces">
-          {app.description}
+          <ReactMarkdown>{app.description}</ReactMarkdown>
         </span>
       )}
     </Link>
@@ -224,10 +225,10 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
     filter
   }), [debouncedSearch, filter]);
 
-  // Infinite query for paginated applications
+  // Infinite query for paginated applications (no search)
   const {
-    data,
-    isLoading,
+    data: paginatedData,
+    isLoading: isLoadingPaginated,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -236,6 +237,7 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
       limit: 20,
     },
     {
+      enabled: debouncedSearch.length === 0,
       getNextPageParam: (lastPage) => {
         if (!lastPage || lastPage.length < 20) return undefined;
         return lastPage[lastPage.length - 1]?.id;
@@ -243,10 +245,28 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
     }
   );
 
-  const shownApplications = React.useMemo(() =>
-    data?.pages.flat() ?? [],
-    [data]
+  // Query for search
+  const {
+    data: searchData,
+    isLoading: isLoadingSearch,
+    isFetching: isFetchingSearch,
+  } = api.applications.search.useQuery(
+    {
+      query: debouncedSearch,
+      filter,
+    },
+    {
+      enabled: debouncedSearch.length > 0,
+    }
   );
+
+  // Decide which list to show
+  const shownApplications = React.useMemo(() => {
+    if (debouncedSearch.length > 0) return searchData ?? [];
+    return paginatedData?.pages.flat() ?? [];
+  }, [debouncedSearch.length, searchData, paginatedData]);
+
+  const isLoading = debouncedSearch.length > 0 ? isLoadingSearch : isLoadingPaginated;
 
   const handleItemClick = React.useCallback((item: any) => {
     setActiveItem(item);
@@ -354,7 +374,7 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
                 isLoading={isLoading}
                 isFetchingNextPage={isFetchingNextPage}
                 fetchNextPage={fetchNextPage}
-                hasNextPage={hasNextPage}
+                hasNextPage={debouncedSearch.length > 0 ? false : hasNextPage}
               />
             </SidebarGroupContent>
           </SidebarGroup>
