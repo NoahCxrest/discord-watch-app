@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, ChevronDown } from "lucide-react";
+import { Calendar } from "lucide-react";
 import React from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { api } from "~/trpc/react";
@@ -257,7 +257,6 @@ const TimeSelector = ({
     <SelectTrigger className="w-[160px] h-8 text-sm">
       <Calendar className="w-4 h-4 mr-2 opacity-70" />
       <SelectValue />
-      <ChevronDown className="w-4 h-4 ml-auto opacity-50" />
     </SelectTrigger>
     <SelectContent align="end" className="min-w-[160px]">
       {TIME_PERIODS.map((period) => (
