@@ -1,4 +1,5 @@
 import { applicationsRouter } from "./routers/applications";
+import { guildCountRouter } from "./routers/guildCount";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -8,6 +9,7 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
   applications: applicationsRouter,
+  guildCount: guildCountRouter,
 });
 
 // export type definition of API

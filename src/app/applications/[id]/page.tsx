@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getApplicationById } from "~/server/db/applications";
 import type { Metadata } from "next";
+import { GuildCountChart } from "./guild-count-chart";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,10 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
           />
         )}
 
+        {/* Guild Count Chart */}
+        <div className="mt-8">
+          <GuildCountChart botId={app.id} />
+        </div>
       </div>
     </div>
   );
