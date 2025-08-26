@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { ArchiveX, Command, File, Inbox, Send, Trash2 } from "lucide-react"
 import { api } from "~/trpc/react"
 import { Skeleton } from "~/components/ui/skeleton"
@@ -52,10 +53,10 @@ const ApplicationItem = React.memo(({ app }: { app: any }) => {
   }, []);
 
   return (
-    <a
-      href="#"
-      key={app.id}
+    <Link
+      href={`/applications/${app.id}`}
       className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
+      prefetch={false}
     >
       <div className="flex w-full items-center gap-2">
         <img
@@ -71,7 +72,7 @@ const ApplicationItem = React.memo(({ app }: { app: any }) => {
           {app.description}
         </span>
       )}
-    </a>
+    </Link>
   )
 })
 ApplicationItem.displayName = "ApplicationItem"

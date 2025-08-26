@@ -1,10 +1,10 @@
 import { db } from "./index";
 import { applications } from "./schema";
+import { like, or, eq } from "drizzle-orm";
 
-import { like, or } from "drizzle-orm";
 
 /**
- * Fetch all applications from the database.
+ * Fetch all applications from the database (only used fields).
  */
 export async function getAllApplications() {
 	return await db
@@ -15,6 +15,14 @@ export async function getAllApplications() {
 			description: applications.description,
 		})
 		.from(applications);
+}
+
+/**
+ * Fetch a single application by id (all fields).
+ */
+export async function getApplicationById(id: string) {
+	const result = await db.select().from(applications).where(eq(applications.id, id));
+	return result[0] ?? null;
 }
 
 /**
