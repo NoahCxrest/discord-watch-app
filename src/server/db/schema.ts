@@ -1,5 +1,4 @@
 import { mysqlTable, tinyint, primaryKey, varchar, text, mediumtext, timestamp } from "drizzle-orm/mysql-core"
-import { sql } from "drizzle-orm"
 
 export const applications = mysqlTable("applications", {
 	id: varchar({ length: 32 }).notNull(),

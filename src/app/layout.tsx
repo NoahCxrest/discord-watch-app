@@ -46,25 +46,7 @@ export default function RootLayout({
           >
             <AppSidebar />
             <SidebarInset>
-              <header className="bg-background sticky top-0 flex shrink-0 items-center gap-2 border-b p-4">
-                {/* Optionally, you can add a SidebarTrigger here if you want it globally */}
-                <Separator
-                  orientation="vertical"
-                  className="mr-2 data-[orientation=vertical]:h-4"
-                />
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href="#">All Inboxes</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>Inbox</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </header>
-              <div className="flex flex-1 flex-col gap-4 p-4">
+              <div className="flex flex-1 flex-col gap-4 p-0">
                 {children}
               </div>
             </SidebarInset>

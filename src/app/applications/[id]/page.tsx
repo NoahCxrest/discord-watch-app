@@ -4,75 +4,68 @@ import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const app = await getApplicationById(params.id);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const app = await getApplicationById(id);
   if (!app) return { title: "Not found" };
   return { title: app.name };
 }
 
-export default async function ApplicationPage({ params }: { params: { id: string } }) {
-  const app = await getApplicationById(params.id);
+export default async function ApplicationPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const app = await getApplicationById(id);
   if (!app) return notFound();
 
-  // Use botBanner and botBannerColor from schema
   const banner = app.botBanner;
   const bannerColor = app.botBannerColor;
 
   return (
-    <>
-      {/* Banner is absolutely positioned edge-to-edge */}
+    <div className="relative">
+      {/* Banner */}
       {banner && (
-        <div className="w-full h-72 md:h-[50vh] overflow-hidden relative flex items-center justify-center bg-muted" style={{ background: bannerColor || undefined }}>
+        <div
+          className="relative w-full h-64 md:h-[40vh] overflow-hidden bg-muted"
+          style={{ background: bannerColor || undefined }}
+        >
           <img
             src={`https://cdn.discordapp.com/banners/${app.id}/${banner}.png?size=1024`}
             alt="Banner"
             className="object-cover w-full h-full"
           />
-          {/* Fade to background color overlay */}
-          {/* Easing blur and fade overlay */}
-          <div className="pointer-events-none absolute left-0 top-1/3 w-full h-2/3">
-            {/* Easing blur overlay using a gradient mask */}
-            <div
-              className="absolute inset-0"
-              style={{
-                WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.25) 20%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,1) 100%)",
-                maskImage: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.25) 20%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,1) 100%)",
-                backdropFilter: "blur(24px)",
-                WebkitBackdropFilter: "blur(24px)",
-              }}
-            />
-            {/* Color fade overlay */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, var(--background, #09090b) 100%)"
-              }}
-            />
-          </div>
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-background" />
         </div>
       )}
-      {/* Spacer to push content below the banner */}
-      {banner && <div className="mb-6" />}
-      {/* Main content with padding and margin to separate from banner */}
-      <div className="max-w-2xl mx-auto pb-10 px-4">
-        <div className="flex items-center gap-4 mb-6">
+
+      {/* Header section overlaps banner */}
+      <div className="max-w-4xl mx-auto px-4 relative -mt-16">
+        <div className="flex items-end gap-4">
           <img
             src={`https://cdn.discordapp.com/avatars/${app.id}/${app.icon}.png?size=128`}
             alt={app.name}
-            className="size-16 rounded-full border"
+            className="size-24 rounded-full border-4 border-background shadow-lg"
           />
-          <div>
-            <h1 className="text-2xl font-bold">{app.name}</h1>
-            <div className="text-muted-foreground text-sm">ID: {app.id}</div>
+          <div className="pb-2">
+            <h1 className="text-3xl font-bold">{app.name}</h1>
+            <p className="text-muted-foreground text-sm">ID: {app.id}</p>
           </div>
         </div>
+      </div>
+
+      {/* Main content */}
+      <div className="max-w-4xl mx-auto px-4 mt-6 pb-10">
         {app.description && (
           <p className="mb-4 text-base text-foreground">{app.description}</p>
         )}
         {app.detailedDescription && (
-          <div className="prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: app.detailedDescription }} />
+          <div
+            className="prose prose-sm max-w-none text-foreground"
+            dangerouslySetInnerHTML={{ __html: app.detailedDescription }}
+          />
         )}
-        <div className="mt-8 grid grid-cols-2 gap-4 text-sm">
+
+        {/* Stats grid */}
+        <div className="mt-8 grid grid-cols-2 gap-4 text-sm bg-card rounded-xl p-4 shadow">
           <div><span className="font-medium">Verified:</span> {app.isVerified ? "Yes" : "No"}</div>
           {app.botUsername && <div><span className="font-medium">Bot Username:</span> {app.botUsername}</div>}
           {app.guildCount && <div><span className="font-medium">Guild Count:</span> {app.guildCount}</div>}
@@ -80,6 +73,6 @@ export default async function ApplicationPage({ params }: { params: { id: string
           {app.updatedAt && <div><span className="font-medium">Updated:</span> {app.updatedAt}</div>}
         </div>
       </div>
-    </>
+    </div>
   );
 }
