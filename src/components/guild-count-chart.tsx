@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import { AreaChart, Area, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { Calendar, ChevronDown } from "lucide-react";
+import React from "react";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { api } from "~/trpc/react";
 import {
   Card,
@@ -42,16 +42,18 @@ type GuildCountChartProps = {
   defaultPeriod?: string;
 };
 
+
 const TIME_PERIODS: TimePeriod[] = [
   { value: "1h", label: "Last Hour", limit: 12, hours: 1 },
   { value: "6h", label: "Last 6 Hours", limit: 24, hours: 6 },
   { value: "24h", label: "Last 24 Hours", limit: 48, hours: 24 },
   { value: "3d", label: "Last 3 Days", limit: 72, hours: 72 },
   { value: "7d", label: "Last 7 Days", limit: 168, hours: 168 },
+  { value: "10d", label: "Last 10 Days", limit: 240, hours: 240 },
   { value: "30d", label: "Last 30 Days", limit: 720, hours: 720 },
 ];
 
-const DEFAULT_PERIOD = TIME_PERIODS[2]; // 24h
+const DEFAULT_PERIOD = TIME_PERIODS[5]; // 10d
 
 const CHART_CONFIG = {
   guildCount: {
@@ -109,28 +111,33 @@ const formatTooltipDate = (value: string): string => {
 
 const validateAndCleanData = (data: unknown): GuildData[] => {
   if (!Array.isArray(data)) return [];
-
   return data
-    .filter((item): item is GuildData => {
-      return (
+    .filter((item): item is { date: unknown; guildCount: unknown } => {
+      return Boolean(
         item &&
         typeof item === "object" &&
-        typeof item.date === "string" &&
-        typeof item.guildCount === "number" &&
-        !isNaN(item.guildCount)
+        item !== null &&
+        "date" in item &&
+        "guildCount" in item
       );
     })
-    .map((item) => ({
-      date: item.date,
-      guildCount: Math.max(0, item.guildCount),
-    }))
+    .map((item) => {
+      const date = typeof item.date === "string" ? item.date : String(item.date);
+      const guildCount = typeof item.guildCount === "number" && !isNaN(item.guildCount)
+        ? item.guildCount
+        : Number(item.guildCount);
+      return {
+        date,
+        guildCount: Math.max(0, isNaN(guildCount) ? 0 : guildCount),
+      };
+    })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
 const findTimePeriod = (value: string): TimePeriod => {
-  const found = TIME_PERIODS.find(p => p.value === value);
-  //@ts-ignore
-  return found || DEFAULT_PERIOD;
+  const found = TIME_PERIODS.find((p) => p.value === value);
+  // @ts-expect-error fallback is safe
+  return found ?? DEFAULT_PERIOD;
 };
 
 const LoadingState = () => (
@@ -195,7 +202,9 @@ const ChartComponent = ({ data, period }: { data: GuildData[]; period: TimePerio
             axisLine={false}
             tickMargin={8}
             minTickGap={period.hours <= 24 ? 20 : 32}
-            tickFormatter={(value) => formatDate(value, period)}
+            tickFormatter={(value: unknown) =>
+              typeof value === "string" ? formatDate(value, period) : String(value)
+            }
             className="text-xs"
           />
           <YAxis
@@ -286,7 +295,7 @@ const calculateStats = (data: GuildData[]): StatsCalculation => {
 
 export function GuildCountChart({ 
   botId, 
-  defaultPeriod = "24h" 
+  defaultPeriod = "30d" 
 }: GuildCountChartProps) {
   const [selectedPeriod, setSelectedPeriod] = React.useState(defaultPeriod);
   

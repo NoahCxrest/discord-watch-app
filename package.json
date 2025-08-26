@@ -46,7 +46,7 @@
     "react-dom": "^19.0.0",
     "react-intersection-observer": "^9.16.0",
     "react-markdown": "^10.1.0",
-    "recharts": "^3.1.2",
+    "recharts": "2.15.4",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "remark-linkify-regex": "^1.2.1",

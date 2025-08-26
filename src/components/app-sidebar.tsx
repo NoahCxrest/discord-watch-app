@@ -1,28 +1,26 @@
 "use client"
 
-import * as React from "react"
+import { Inbox, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { ArchiveX, Command, File, Inbox, Send, Trash2 } from "lucide-react"
-import { api } from "~/trpc/react"
+import { usePathname } from "next/navigation"
+import * as React from "react"
 import { useInView } from "react-intersection-observer"
-import { Skeleton } from "~/components/ui/skeleton"
-import { Loader2 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
-import { EmptyState } from "~/components/ui/empty-state"
+import { Button } from "~/components/ui/button"
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu"
-import { Button } from "~/components/ui/button"
+import { EmptyState } from "~/components/ui/empty-state"
+import { Skeleton } from "~/components/ui/skeleton"
+import { api } from "~/trpc/react"
+import type { ApplicationListItem } from "~/types/application"
 
-import { NavUser } from "~/components/nav-user"
-import { Label } from "~/components/ui/label"
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -30,7 +28,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
+  useSidebar
 } from "~/components/ui/sidebar"
 
 // Memoized skeleton loader component
@@ -49,23 +47,34 @@ const SkeletonLoader = React.memo(() => (
 ))
 SkeletonLoader.displayName = "SkeletonLoader"
 
-const ApplicationItem = React.memo(({ app }: { app: any }) => {
-  const handleImageError = React.useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    (e.target as HTMLImageElement).src = "/favicon.ico";
-  }, []);
-
+const ApplicationItem = React.memo(({ app }: { app: ApplicationListItem }) => {
+  const pathname = usePathname();
+  const isActive = pathname === `/applications/${app.id}`;
   return (
     <Link
       href={`/applications/${app.id}`}
-      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
+      className={
+        `flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0 ` +
+        (isActive
+          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+          : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground")
+      }
       prefetch={false}
+      aria-current={isActive ? "page" : undefined}
     >
       <div className="flex w-full items-center gap-2">
         <img
-          src={`https://cdn.discordapp.com/avatars/${app.id}/${app.icon}.png?size=512`}
+          src={app.icon ? `https://cdn.discordapp.com/avatars/${app.id}/${app.icon}.png?size=512` : "/0.png"}
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (!target.src.endsWith("/0.png")) {
+              target.src = "/0.png";
+            }
+          }}
           alt={app.name}
           className="size-6 rounded-full"
-          onError={handleImageError}
+          width={24}
+          height={24}
         />
         <span>{app.name}</span>
       </div>
@@ -83,7 +92,7 @@ const ApplicationItem = React.memo(({ app }: { app: any }) => {
         </span>
       )}
     </Link>
-  )
+  );
 })
 ApplicationItem.displayName = "ApplicationItem"
 
@@ -95,7 +104,7 @@ const ApplicationsList = React.memo(({
   fetchNextPage, 
   hasNextPage 
 }: { 
-  applications: any[] | undefined; 
+  applications: ApplicationListItem[] | undefined; 
   isLoading: boolean; 
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
@@ -169,14 +178,21 @@ const FilterDropdown = React.memo(({
 ))
 FilterDropdown.displayName = "FilterDropdown"
 
+type NavItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  isActive: boolean;
+};
+
 const NavigationMenu = React.memo(({ 
   navMain, 
   activeItem, 
   onItemClick 
 }: { 
-  navMain: any[]; 
-  activeItem: any; 
-  onItemClick: (item: any) => void; 
+  navMain: NavItem[]; 
+  activeItem: NavItem; 
+  onItemClick: (item: NavItem) => void; 
 }) => (
   <SidebarMenu>
     {navMain.map((item) => (
@@ -201,7 +217,7 @@ NavigationMenu.displayName = "NavigationMenu"
 
 export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof Sidebar>) => {
   // Memoize static navigation data
-  const navMain = React.useMemo(() => [
+  const navMain = React.useMemo<NavItem[]>(() => [
     {
       title: "Applications",
       url: "#",
@@ -210,8 +226,8 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
     },
   ], []);
 
-  const [activeItem, setActiveItem] = React.useState(() => navMain[0]);
-  const { setOpen } = useSidebar();
+  const [activeItem] = React.useState<NavItem>(navMain[0]!);
+  useSidebar();
 
 
   const [search, setSearch] = React.useState("");
@@ -228,6 +244,7 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
     inputRef.current?.focus();
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const searchQueryParams = React.useMemo(() => ({
     query: debouncedSearch,
     filter
@@ -257,7 +274,6 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
   const {
     data: searchData,
     isLoading: isLoadingSearch,
-    isFetching: isFetchingSearch,
   } = api.applications.search.useQuery(
     {
       query: debouncedSearch,
@@ -269,17 +285,12 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
   );
 
   // Decide which list to show
-  const shownApplications = React.useMemo(() => {
-    if (debouncedSearch.length > 0) return searchData ?? [];
-    return paginatedData?.pages.flat() ?? [];
+  const shownApplications: ApplicationListItem[] = React.useMemo(() => {
+    if (debouncedSearch.length > 0) return (searchData as ApplicationListItem[]) ?? [];
+    return (paginatedData?.pages.flat() as ApplicationListItem[]) ?? [];
   }, [debouncedSearch.length, searchData, paginatedData]);
 
   const isLoading = debouncedSearch.length > 0 ? isLoadingSearch : isLoadingPaginated;
-
-  const handleItemClick = React.useCallback((item: any) => {
-    setActiveItem(item);
-    setOpen(true);
-  }, [setOpen]);
 
   const handleSearchChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -289,54 +300,12 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
     setFilter(newFilter);
   }, []);
 
-  const userData = React.useMemo(() => ({
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  }), []);
-
   return (
     <Sidebar
       collapsible="icon"
       className="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
       {...props}
     >
-      <Sidebar
-        collapsible="none"
-        className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r"
-      >
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild className="md:h-8 md:p-0">
-                <a href="#">
-                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                    <Command className="size-4" />
-                  </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">Acme Inc</span>
-                    <span className="truncate text-xs">Enterprise</span>
-                  </div>
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent className="px-1.5 md:px-0">
-              <NavigationMenu 
-                navMain={navMain} 
-                activeItem={activeItem} 
-                onItemClick={handleItemClick}
-              />
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <NavUser user={userData} />
-        </SidebarFooter>
-      </Sidebar>
 
       <Sidebar collapsible="none" className="hidden flex-1 md:flex">
         <SidebarHeader className="gap-3.5 border-b p-4">
