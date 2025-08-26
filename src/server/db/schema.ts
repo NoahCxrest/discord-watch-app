@@ -32,3 +32,10 @@ export const appStats = mysqlTable("app_stats", {
   index("bot_id_idx").on(table.botId),
   index("recorded_at_idx").on(table.recordedAt),
 ]);
+
+export const botScanLog = mysqlTable("bot_scan_log", {
+  botId: varchar("bot_id", { length: 32 }).notNull(),
+  lastScannedAt: timestamp("last_scanned_at", { mode: 'string' }).notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.botId], name: "bot_scan_log_bot_id" }),
+]);
