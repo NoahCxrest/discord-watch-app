@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getApplicationById } from "~/server/db/applications";
+import { getGuildCountHistory } from "~/server/db/guildCount";
 import type { Metadata } from "next";
 import { GuildCountChart } from "./guild-count-chart";
 
@@ -11,11 +12,18 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!app) return { title: "Not found" };
   return { title: app.name };
 }
-
-export default async function ApplicationPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function ApplicationPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const app = await getApplicationById(id);
   if (!app) return notFound();
+
+  // Fetch initial guild count data (last 24 entries)
+  let initialGuildCountData: Array<{ date: string; guildCount: number }> = [];
+  try {
+    initialGuildCountData = await getGuildCountHistory(app.id, 24);
+  } catch (e) {
+    // fail silently, chart will handle empty data
+  }
 
   const banner = app.botBanner;
   const bannerColor = app.botBannerColor;
@@ -67,9 +75,10 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
 
         {/* Guild Count Chart */}
         <div className="mt-8">
-          <GuildCountChart botId={app.id} />
+          <GuildCountChart botId={app.id} initialData={initialGuildCountData} />
         </div>
       </div>
     </div>
   );
 }
+

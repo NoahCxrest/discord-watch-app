@@ -17,8 +17,20 @@ import {
 import React from "react";
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
-export function GuildCountChart({ botId }: { botId: string }) {
-  const { data, isLoading, error } = api.guildCount.history.useQuery({ botId, limit: 24 });
+
+// Accept initialData as a prop
+type GuildCountChartProps = {
+  botId: string;
+  initialData?: Array<{ date: string; guildCount: number }>;
+};
+
+export function GuildCountChart({ botId, initialData }: GuildCountChartProps) {
+  // If initialData is provided, skip fetching by default
+  const shouldFetch = !initialData;
+  const { data, isLoading, error } = api.guildCount.history.useQuery(
+    { botId, limit: 24 },
+    { enabled: shouldFetch }
+  );
 
   // Chart config
   const chartConfig = {
@@ -29,12 +41,15 @@ export function GuildCountChart({ botId }: { botId: string }) {
   };
 
   // More robust data filtering and validation
+  // Use initialData if provided, otherwise use fetched data
+  const chartRawData = initialData ?? data;
+
   const safeData = React.useMemo(() => {
-    if (!data || !Array.isArray(data)) {
+    if (!chartRawData || !Array.isArray(chartRawData)) {
       return [];
     }
 
-    return data
+    return chartRawData
       .filter((item) => {
         // More thorough validation
         if (!item || typeof item !== "object") return false;
@@ -49,7 +64,7 @@ export function GuildCountChart({ botId }: { botId: string }) {
         guildCount: Math.max(0, item.guildCount), // Ensure non-negative values
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Sort by date
-  }, [data]);
+  }, [chartRawData]);
 
   // Error handling
   if (error) {
@@ -81,7 +96,7 @@ export function GuildCountChart({ botId }: { botId: string }) {
         </div>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        {isLoading ? (
+  {isLoading && !initialData ? (
           <div className="min-h-[200px] flex items-center justify-center">
             <div className="animate-pulse">Loading chart data...</div>
           </div>
