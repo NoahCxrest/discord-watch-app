@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { ArchiveX, Command, File, Inbox, Send, Trash2 } from "lucide-react"
 import { api } from "~/trpc/react"
+import { useInView } from "react-intersection-observer"
 import { Skeleton } from "~/components/ui/skeleton"
 import { Loader2 } from "lucide-react"
 import { EmptyState } from "~/components/ui/empty-state"
@@ -81,13 +82,26 @@ ApplicationItem.displayName = "ApplicationItem"
 const ApplicationsList = React.memo(({ 
   applications, 
   isLoading, 
-  isLoadingAll 
+  isFetchingNextPage, 
+  fetchNextPage, 
+  hasNextPage 
 }: { 
   applications: any[] | undefined; 
   isLoading: boolean; 
-  isLoadingAll: boolean; 
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => void;
+  hasNextPage: boolean | undefined;
 }) => {
-  if (isLoading || isLoadingAll) {
+  const { ref } = useInView({
+    threshold: 0,
+    onChange: (inView) => {
+      if (inView && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+  });
+
+  if (isLoading) {
     return <SkeletonLoader />
   }
 
@@ -100,6 +114,11 @@ const ApplicationsList = React.memo(({
       {applications.map((app) => (
         <ApplicationItem key={app.id} app={app} />
       ))}
+      {hasNextPage && (
+        <div ref={ref} className="flex justify-center p-4">
+          <Loader2 className="animate-spin size-5 text-muted-foreground" />
+        </div>
+      )}
     </>
   )
 })
@@ -205,24 +224,28 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
     filter
   }), [debouncedSearch, filter]);
 
+  // Infinite query for paginated applications
   const {
-    data: applications,
+    data,
     isLoading,
-    isFetching,
-  } = api.applications.search.useQuery(searchQueryParams, {
-    enabled: debouncedSearch.length > 0
-  });
-
-  const {
-    data: allApplications,
-    isLoading: isLoadingAll,
-  } = api.applications.getAll.useQuery(undefined, {
-    enabled: debouncedSearch.length === 0
-  });
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = api.applications.getPaginated.useInfiniteQuery(
+    {
+      limit: 20,
+    },
+    {
+      getNextPageParam: (lastPage) => {
+        if (!lastPage || lastPage.length < 20) return undefined;
+        return lastPage[lastPage.length - 1]?.id;
+      },
+    }
+  );
 
   const shownApplications = React.useMemo(() =>
-    debouncedSearch.length > 0 ? applications : allApplications,
-    [debouncedSearch.length, applications, allApplications]
+    data?.pages.flat() ?? [],
+    [data]
   );
 
   const handleItemClick = React.useCallback((item: any) => {
@@ -304,12 +327,8 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
                 className="pr-8"
                 autoComplete="off"
               />
-              {isFetching && (
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  <Loader2 className="animate-spin size-4" />
-                </span>
-              )}
-              {search && !isFetching && (
+              {/* Loading indicator for search removed (pagination handles loading) */}
+              {search && (
                 <button
                   type="button"
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -333,7 +352,9 @@ export const AppSidebar = React.memo(({ ...props }: React.ComponentProps<typeof 
               <ApplicationsList 
                 applications={shownApplications}
                 isLoading={isLoading}
-                isLoadingAll={isLoadingAll}
+                isFetchingNextPage={isFetchingNextPage}
+                fetchNextPage={fetchNextPage}
+                hasNextPage={hasNextPage}
               />
             </SidebarGroupContent>
           </SidebarGroup>

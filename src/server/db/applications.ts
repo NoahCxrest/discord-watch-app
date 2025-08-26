@@ -1,6 +1,34 @@
 import { db } from "./index";
 import { applications } from "./schema";
-import { like, or, eq } from "drizzle-orm";
+import { like, or, eq, gt } from "drizzle-orm";
+/**
+ * Fetch applications with cursor-based pagination.
+ * If cursor is provided, fetch applications with id > cursor (assuming id is sortable, otherwise use offset-based pagination).
+ */
+export async function getPaginatedApplications(cursor?: string, limit: number = 20) {
+	if (cursor) {
+		return await db
+			.select({
+				id: applications.id,
+				name: applications.name,
+				icon: applications.icon,
+				description: applications.description,
+			})
+			.from(applications)
+			.where(gt(applications.id, cursor))
+			.limit(limit);
+	} else {
+		return await db
+			.select({
+				id: applications.id,
+				name: applications.name,
+				icon: applications.icon,
+				description: applications.description,
+			})
+			.from(applications)
+			.limit(limit);
+	}
+}
 
 
 /**
