@@ -22,7 +22,7 @@ export const applications = mysqlTable("applications", {
 	primaryKey({ columns: [table.id], name: "applications_id"}),
 ]);
 
-export const appStats = mysqlTable("app_stats", {
+export const applicationStats = mysqlTable("application_stats", {
   id: bigint("id", { mode: "number", unsigned: true }).autoincrement().notNull(),
   botId: varchar("bot_id", { length: 32 }).notNull(),
   guildCount: bigint("guild_count", { mode: "number", unsigned: true }).notNull(),

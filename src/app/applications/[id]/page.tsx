@@ -67,15 +67,14 @@ export default async function ApplicationPage({ params }: { params: { id: string
                 ),
               }}
             >
-              {app.description}
+              {app.description
+                // Remove custom emoji and inaccessible image links
+                .replace(/<:[^:]+:\d+>/g, "")
+                .replace(/<a?:[^:]+:\d+>/g, "")
+                .replace(/https:\/\/cdn.discordapp.com\/emojis\/\d+\.(?:png|gif|jpg)/g, "")
+              }
             </ReactMarkdown>
           </div>
-        )}
-        {app.detailedDescription && (
-          <div
-            className="prose prose-sm max-w-none text-foreground"
-            dangerouslySetInnerHTML={{ __html: app.detailedDescription }}
-          />
         )}
 
         {/* Guild Count Chart */}

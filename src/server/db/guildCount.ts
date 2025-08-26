@@ -1,5 +1,5 @@
 import { db } from "./index";
-import { appStats } from "./schema";
+import { applicationStats } from "./schema";
 import { sql } from "drizzle-orm";
 
 /**
@@ -9,12 +9,12 @@ import { sql } from "drizzle-orm";
  */
 export async function getGuildCountHistory(botId: string, limit = 90) {
   const rows = await db.select({
-    date: appStats.recordedAt,
-    guildCount: appStats.guildCount,
+    date: applicationStats.recordedAt,
+    guildCount: applicationStats.guildCount,
   })
-    .from(appStats)
+    .from(applicationStats)
     .where(sql`bot_id = ${botId}`)
-    .orderBy(appStats.recordedAt)
+    .orderBy(applicationStats.recordedAt)
     .limit(limit);
 
   return rows.map(row => ({

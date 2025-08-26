@@ -1,5 +1,5 @@
 import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
-import { appStats } from "../server/db/schema";
+import { applicationStats } from "../server/db/schema";
 
-export type AppStatsSelect = InferSelectModel<typeof appStats>;
-export type AppStatsInsert = InferInsertModel<typeof appStats>;
+export type AppStatsSelect = InferSelectModel<typeof applicationStats>;
+export type AppStatsInsert = InferInsertModel<typeof applicationStats>;
