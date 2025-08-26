@@ -73,3 +73,12 @@ export async function searchApplications(query: string, filter: "id" | "text" = 
 			)
 		);
 }
+
+
+/**
+ * Fetch the first application by id order.
+ */
+export async function getFirstApplication() {
+	const firstApp = (await db.select().from(applications).orderBy(applications.id).limit(1))?.[0];
+	return firstApp ?? null;
+}
