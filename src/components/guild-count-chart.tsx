@@ -64,23 +64,22 @@ const formatDate = (value: string, period: TimePeriod): string => {
   try {
     const date = new Date(value);
     if (isNaN(date.getTime())) return value;
-    
-    // Show different formats based on time period
+    // Use the user's local timezone by omitting the timeZone option
     if (period.hours <= 24) {
-      return new Intl.DateTimeFormat("en-US", {
-        hour: "numeric",
+      return new Intl.DateTimeFormat(undefined, {
+        hour: "2-digit",
         minute: "2-digit",
         hour12: true,
       }).format(date);
     } else if (period.hours <= 168) {
-      return new Intl.DateTimeFormat("en-US", {
+      return new Intl.DateTimeFormat(undefined, {
         month: "short",
         day: "numeric",
         hour: "numeric",
         hour12: true,
       }).format(date);
     } else {
-      return new Intl.DateTimeFormat("en-US", {
+      return new Intl.DateTimeFormat(undefined, {
         month: "short",
         day: "numeric",
       }).format(date);
@@ -94,8 +93,8 @@ const formatTooltipDate = (value: string): string => {
   try {
     const date = new Date(value);
     if (isNaN(date.getTime())) return value;
-    
-    return new Intl.DateTimeFormat("en-US", {
+    // Use the user's local timezone by omitting the timeZone option
+    return new Intl.DateTimeFormat(undefined, {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -287,7 +286,6 @@ const calculateStats = (data: GuildData[]): StatsCalculation => {
 
 export function GuildCountChart({ 
   botId, 
-  initialData, 
   defaultPeriod = "24h" 
 }: GuildCountChartProps) {
   const [selectedPeriod, setSelectedPeriod] = React.useState(defaultPeriod);
