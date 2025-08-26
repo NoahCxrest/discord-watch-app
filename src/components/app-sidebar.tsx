@@ -71,7 +71,15 @@ const ApplicationItem = React.memo(({ app }: { app: any }) => {
       </div>
       {app.description && (
         <span className="line-clamp-2 w-[260px] text-xs whitespace-break-spaces">
-          <ReactMarkdown>{app.description}</ReactMarkdown>
+          <ReactMarkdown
+            components={{
+              a: ({ children }) => (
+                <span className="underline decoration-dotted cursor-help">{children}</span>
+              ),
+            }}
+          >
+            {app.description}
+          </ReactMarkdown>
         </span>
       )}
     </Link>
