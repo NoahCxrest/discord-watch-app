@@ -1,8 +1,10 @@
+
 import { notFound } from "next/navigation";
 import { getApplicationById } from "~/server/db/applications";
 import { getGuildCountHistory } from "~/server/db/guildCount";
 import type { Metadata } from "next";
-import { GuildCountChart } from "./guild-count-chart";
+import { GuildCountChart } from "../../../components/guild-count-chart";
+import ReactMarkdown from "react-markdown";
 
 export const dynamic = "force-dynamic";
 
@@ -13,17 +15,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: app.name };
 }
 export default async function ApplicationPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+  const { id } = await params;
   const app = await getApplicationById(id);
   if (!app) return notFound();
 
-  // Fetch initial guild count data (last 24 entries)
-  let initialGuildCountData: Array<{ date: string; guildCount: number }> = [];
-  try {
-    initialGuildCountData = await getGuildCountHistory(app.id, 24);
-  } catch (e) {
-    // fail silently, chart will handle empty data
-  }
 
   const banner = app.botBanner;
   const bannerColor = app.botBannerColor;
@@ -64,7 +59,17 @@ export default async function ApplicationPage({ params }: { params: { id: string
       {/* Main content */}
       <div className="max-w-4xl mx-auto px-4 mt-6 pb-10">
         {app.description && (
-          <p className="mb-4 text-base text-foreground">{app.description}</p>
+          <div className="mb-4 text-base text-foreground prose prose-sm max-w-none">
+            <ReactMarkdown
+              components={{
+                a: (props) => (
+                  <a {...props} className="prose-a:underline prose-a:text-primary" target="_blank" rel="noopener noreferrer" />
+                ),
+              }}
+            >
+              {app.description}
+            </ReactMarkdown>
+          </div>
         )}
         {app.detailedDescription && (
           <div
@@ -75,7 +80,7 @@ export default async function ApplicationPage({ params }: { params: { id: string
 
         {/* Guild Count Chart */}
         <div className="mt-8">
-          <GuildCountChart botId={app.id} initialData={initialGuildCountData} />
+          <GuildCountChart botId={app.id} />
         </div>
       </div>
     </div>
